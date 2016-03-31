@@ -70,15 +70,17 @@ I've looked at many of them before I decided to create this library, and this is
 
 - [PcInt example code](http://playground.arduino.cc/Main/PcInt) from [arduino.cc](http://www.arduino.cc/)
   - [ ] Not available on Arduino's library manager (It's not really a library, after all)
-  - [ ] Doesn't support user data on or pin state on callbacks
+  - [ ] Doesn't support user data on callbacks
+  - [ ] Doesn't provide trigger type (`RISING`/`FALLING`)
   - [X] Supports `RISING`/`FALLING`/`CHANGE` modes
   - [ ] Not very optimized
   - [X] Code quality is Okay
-  - [ ] I'm not sure it will work on all AVR Arduinos without changes
+  - [ ] I think it might need some tweaks depending on the microcontroller used
 
 - [Sodaq_PcInt](https://github.com/SodaqMoja/Sodaq_PcInt) by [SODAQ](https://github.com/SodaqMoja)
   - [X] Available on Arduino's library manager
-  - [ ] Doesn't support user data on or pin state on callbacks
+  - [ ] Doesn't support user data on callbacks
+  - [ ] Doesn't provide trigger type (`RISING`/`FALLING`)
   - [ ] Doesn't supports `RISING`/`FALLING`/`CHANGE` modes (Unless you are using [GabrielNotman's fork](https://github.com/GabrielNotman/Sodaq_PcInt))
   - [X] Very optimized
   - [X] Excelent code
@@ -86,15 +88,17 @@ I've looked at many of them before I decided to create this library, and this is
 
 - [PinChangeInterrupt Library](https://github.com/NicoHood/PinChangeInterrupt) by [NicoHood](https://github.com/NicoHood)
   - [X] Available on Arduino's library manager
-  - [ ] Doesn't support user data on or pin state on callbacks
+  - [ ] Doesn't support user data on callbacks
+  - [X] Provides trigger type (`RISING`/`FALLING`) via `getPinChangeInterruptTrigger()`
   - [X] Supports `RISING`/`FALLING`/`CHANGE` modes
   - [X] It's super-optimized and configurable, but...
   - [ ] The code is a bit messy (IMHO, anyway)
   - [X] Should on all/most AVR Arduinos
 
-- [EnableInterrupt](https://github.com/GreyGnome/v) by [Mike "GreyGnome" Schwager](https://github.com/GreyGnome)
+- [EnableInterrupt](https://github.com/GreyGnome/EnableInterrupt) by [Mike "GreyGnome" Schwager](https://github.com/GreyGnome)
   - [X] Available on Arduino's library manager
-  - [ ] Doesn't support user data on or pin state on callbacks, but does provide the pin number via the `EI_ARDUINO_INTERRUPTED_PIN` macro
+  - [ ] Doesn't support user data on callbacks (but does provide the pin number via the `EI_ARDUINO_INTERRUPTED_PIN` macro)
+  - [ ] Doesn't provide trigger type (`RISING`/`FALLING`)
   - [X] Supports `RISING`/`FALLING`/`CHANGE` modes
   - [X] It's super-optimized and configurable, but...
   - [ ] Big monolithic messy code
@@ -102,7 +106,8 @@ I've looked at many of them before I decided to create this library, and this is
 
 - [PciManager](https://github.com/prampec/arduino-pcimanager) by [Balazs Kelemen](https://github.com/prampec)
   - [X] Available on Arduino's library manager
-  - [ ] Doesn't support user data on callbacks, but does provide pin state
+  - [ ] Doesn't support user data on callbacks
+  - [X] Provides trigger type (`RISING`/`FALLING`) via `getPinChangeInterruptTrigger()`
   - [ ] Doesn't supports `RISING`/`FALLING`/`CHANGE` modes
   - [ ] Not very optimized
   - [X] Good code quality
