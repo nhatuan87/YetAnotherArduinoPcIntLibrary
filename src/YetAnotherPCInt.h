@@ -46,7 +46,4 @@ public:
   static void detachInterrupt(uint8_t pin);
   static void enableInterrupt(uint8_t pin);
   static void disableInterrupt(uint8_t pin);
-
-  // For diagnostic purposes
-  static callback getFunc(uint8_t group, uint8_t nr);
 };

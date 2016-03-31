@@ -196,21 +196,6 @@ void PcInt::disableInterrupt(uint8_t pin)
   }
 }
 
-/*
- * Get the installed function pointer
- *
- * This function serves just for diagnostic purposes.
- */
-PcInt::callback PcInt::getFunc(uint8_t group, uint8_t nr)
-{
-  PcIntPort* port = get_port(group);
-  if (port && nr < 8) {
-    return (callback)port->funcs[nr];
-  } else {
-    return nullptr;
-  }
-}
-
 #define IMPLEMENT_ISR(vect, port, pin_register) \
   ISR(vect) \
   { \
