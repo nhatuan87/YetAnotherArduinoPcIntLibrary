@@ -66,7 +66,7 @@
 
 class PcIntPort {
 public:
-  PcInt::callback_arg funcs[8];
+  PcInt::callback funcs[8];
   void* args[8];
   uint8_t state;
   uint8_t rising;
@@ -134,13 +134,7 @@ static inline uint8_t get_port_value(uint8_t port) {
     }
 }
 
-void PcInt::attachInterrupt(uint8_t pin, callback func, uint8_t mode) {
-  //On AVR's default calling convention, if we call a no-arg funcion passing an argument,
-  //it is silently ignored and nothing goes wrong.
-  attachInterrupt(pin, (callback_arg)func, nullptr, mode);
-}
-
-void PcInt::attachInterrupt(uint8_t pin, callback_arg func, void* arg, uint8_t mode) {
+void PcInt::attachInterrupt(uint8_t pin, callback func, void* arg, uint8_t mode) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
   if (pcicr && pcmsk) {

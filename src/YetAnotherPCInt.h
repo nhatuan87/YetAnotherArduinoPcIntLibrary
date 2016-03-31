@@ -34,16 +34,45 @@
 
 class PcInt {
 public:
-  typedef void (*callback)(void);
-  typedef void (*callback_arg)(void *arg, bool value);
+  typedef void (*callback)(void *userdata, bool pinstate);
   
-  static void attachInterrupt(uint8_t pin, callback func, uint8_t mode=CHANGE);
-  static void attachInterrupt(uint8_t pin, callback_arg func, void *arg, uint8_t mode=CHANGE);
-  template<typename T> 
-  static inline void attachInterrupt(uint8_t pin, void(*func)(T *arg, bool value), T *arg, uint8_t mode=CHANGE) {
-    attachInterrupt(pin, (PcInt::callback_arg)func, (void*) arg, mode);
-  }
+  static void attachInterrupt(uint8_t pin, callback func, void *userdata, uint8_t mode=CHANGE);
   static void detachInterrupt(uint8_t pin);
   static void enableInterrupt(uint8_t pin);
   static void disableInterrupt(uint8_t pin);
+
+
+  // === Syntax sugar for `attachInterrupt()` with different callback signatures ===
+  
+  // Ataches an interrupt callback without arguments.
+  static inline void attachInterrupt(uint8_t pin, void(*func)(), uint8_t mode=CHANGE) {
+    //On AVR's calling convention, if we call a funcion with extra arguments, they are silently ignored
+    attachInterrupt(pin, (callback)func, nullptr, mode);
+  };
+
+  // Ataches an interrupt callback with user data.
+  template<typename T>
+  static inline void attachInterrupt(uint8_t pin, void(*func)(T *arg), T *userdata, uint8_t mode=CHANGE) {
+    //On AVR's calling convention, if we call a funcion with extra arguments, they are silently ignored
+    attachInterrupt(pin, (PcInt::callback)func, (void*)userdata, mode);
+  };
+
+  // Ataches an interrupt callback with pin state.
+  static inline void attachInterrupt(uint8_t pin, void(*func)(bool pinstate), uint8_t mode=CHANGE) {
+    //On AVR's calling convention, if we call a funcion with extra arguments, they are silently ignored
+    attachInterrupt(pin, _wrap_callback_pinvalue, func, mode);
+  };
+  
+  // Ataches an interrupt callback with user data and pin state.
+  template<typename T>
+  static inline void attachInterrupt(uint8_t pin, void(*func)(T *arg, bool pinstate), T *userdata, uint8_t mode=CHANGE) {
+    attachInterrupt(pin, (PcInt::callback)func, (void*)userdata, mode);
+  };
+  
+  
+private:
+  //This tiny wrapper is necessary for callback with pin_state but without userdata
+  static void _wrap_callback_pinvalue(void (*func)(bool pinstate), bool pinstate) {
+    func(pinstate);
+  };
 };
