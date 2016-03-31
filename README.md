@@ -1,7 +1,7 @@
 Yet Another Arduino PcInt Library
 =================================
 
-This is an Arduino library to administrate and handle Pin Change Interrupts.
+As you may have guessed, this is an Arduino library to handle Pin Change Interrupts.
 
 Features
 --------
@@ -20,8 +20,23 @@ Features
     Adding this as an argument prevents issues when the pin state changes so quickly that you don't have the time to call `digitalRead()`
     
 - It should support `RISING`/`FALLING`/`CHANGE` modes
+
 - Code is very efficient (It's an ISR, after all)
+
 - Code is very small (~250 lines) and readable
+
+
+About Pin Change Interruptions
+------------------------------
+
+AVR microcontrollers only have a few external Interruption pins.
+But I want to monitor more pins... Looots more!
+
+The alternative is using pin change interrupts, which is supported on lots of pins simultaneously.
+
+The interrupt can be enabled for each supported pin individually, but there are only a few interrupt vectors, so up to 8 pins share the same service routine.
+
+It's up to the software to figure out which pins changed state and act accordingly. This library does it for you :)
 
 
 Comparisson with other libraries
