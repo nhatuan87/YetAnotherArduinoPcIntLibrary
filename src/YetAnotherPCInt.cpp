@@ -50,6 +50,7 @@
 #include "YetAnotherPCInt.h"
 #include "PinChangeInterruptBoards.h"
 
+#define WITHOUT_INTERRUPTION(CODE) {uint8_t sreg = SREG; noInterrupts(); {CODE} SREG = sreg;}
 
 #define IMPLEMENT_ISR(port, isr_vect, pin_register) \
   ISR(isr_vect) \
@@ -137,34 +138,36 @@ static inline uint8_t get_port_value(uint8_t port) {
 void PcInt::attachInterrupt(uint8_t pin, callback func, void* arg, uint8_t mode) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
-  if (pcicr && pcmsk) {
-    uint8_t portGroup = digitalPinToPCICRbit(pin);
-    uint8_t portBit = digitalPinToPCMSKbit(pin);
-    uint8_t portBitMask = _BV(portBit);
-    PcIntPort* port = get_port(portGroup);
-
-    if (port) {
+  uint8_t portGroup = digitalPinToPCICRbit(pin);
+  uint8_t portBit = digitalPinToPCMSKbit(pin);
+  uint8_t portBitMask = _BV(portBit);
+  PcIntPort* port = get_port(portGroup);
+  
+  if (pcicr && pcmsk && port && func) {
+    WITHOUT_INTERRUPTION({
       port->funcs[portBit] = func;
       port->args[portBit] = arg;
-      port->rising  |= (mode == RISING || mode == CHANGE) ? portBitMask : 0;
-      port->falling |= (mode == FALLING || mode == CHANGE) ? portBitMask : 0;
-      port->state    = get_port_value(portGroup);
+      port->rising  = (mode == RISING || mode == CHANGE)  ?  (port->rising  | portBitMask)  :  (port->rising  & ~portBitMask);
+      port->falling = (mode == FALLING|| mode == CHANGE)  ?  (port->falling | portBitMask)  :  (port->falling & ~portBitMask);
       *pcmsk |= portBitMask;
       *pcicr |= _BV(digitalPinToPCICRbit(pin));
-    }
+
+      //Update the current state (but only for this pin, to prevent concurrency issues on the others)
+      port->state = (port->state & ~portBitMask) | (get_port_value(portGroup) & portBitMask);
+    })
   }
 }
 
 void PcInt::detachInterrupt(uint8_t pin) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
-  if (pcicr && pcmsk) {
-    uint8_t portGroup = digitalPinToPCICRbit(pin);
-    uint8_t portBit = digitalPinToPCMSKbit(pin);
-    uint8_t portBitMask = _BV(portBit);
-    PcIntPort* port = get_port(portGroup);
-    
-    if (port) {
+  uint8_t portGroup = digitalPinToPCICRbit(pin);
+  uint8_t portBit = digitalPinToPCMSKbit(pin);
+  uint8_t portBitMask = _BV(portBit);
+  PcIntPort* port = get_port(portGroup);
+  
+  if (pcicr && pcmsk && port) {   
+    WITHOUT_INTERRUPTION({
       port->funcs[portBit] = nullptr;
       port->args[portBit] = nullptr;
       port->rising &= ~portBitMask;
@@ -175,7 +178,7 @@ void PcInt::detachInterrupt(uint8_t pin) {
       if (!*pcmsk) {
         *pcicr &= ~_BV(digitalPinToPCICRbit(pin));
       }
-    }
+    })
   }
 }
 
