@@ -134,62 +134,51 @@ static inline uint8_t get_port_value(uint8_t port) {
     }
 }
 
-static inline uint8_t bitpos(uint8_t mask)
-{
-  for (uint8_t i = 0; i < 8; ++i) {
-    if (mask & _BV(i)) {
-      return i;
-    }
-  }
-  return -1; //Should not happen
-}
-
-void PcInt::attachInterrupt(uint8_t pin, callback func, uint8_t mode) 
-{
+void PcInt::attachInterrupt(uint8_t pin, callback func, uint8_t mode) {
   //On AVR's default calling convention, if we call a no-arg funcion passing an argument,
   //it is silently ignored and nothing goes wrong.
   attachInterrupt(pin, (callback_arg)func, nullptr, mode);
 }
 
-void PcInt::attachInterrupt(uint8_t pin, callback_arg func, void* arg, uint8_t mode)
-{
+void PcInt::attachInterrupt(uint8_t pin, callback_arg func, void* arg, uint8_t mode) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
   if (pcicr && pcmsk) {
-    uint8_t pcintGroup = digitalPinToPCICRbit(pin);
-    uint8_t portBitMask = digitalPinToBitMask(pin);
-    PcIntPort* port = get_port(pcintGroup);
+    uint8_t portGroup = digitalPinToPCICRbit(pin);
+    uint8_t portBit = digitalPinToPCMSKbit(pin);
+    uint8_t portBitMask = _BV(portBit);
+    PcIntPort* port = get_port(portGroup);
 
     if (port) {
-      port->funcs[bitpos(portBitMask)] = func;
-      port->args[bitpos(portBitMask)] = arg;
+      port->funcs[portBit] = func;
+      port->args[portBit] = arg;
       port->rising  |= (mode == RISING || mode == CHANGE) ? portBitMask : 0;
       port->falling |= (mode == FALLING || mode == CHANGE) ? portBitMask : 0;
-      port->state    = get_port_value(pcintGroup);
-      *pcmsk |= _BV(digitalPinToPCMSKbit(pin));
+      port->state    = get_port_value(portGroup);
+      *pcmsk |= portBitMask;
       *pcicr |= _BV(digitalPinToPCICRbit(pin));
     }
   }
 }
 
-void PcInt::detachInterrupt(uint8_t pin)
-{
+void PcInt::detachInterrupt(uint8_t pin) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
   if (pcicr && pcmsk) {
-    uint8_t pcintGroup = digitalPinToPCICRbit(pin);
-    uint8_t portBitMask = digitalPinToBitMask(pin);
-    PcIntPort* port = get_port(pcintGroup);
+    uint8_t portGroup = digitalPinToPCICRbit(pin);
+    uint8_t portBit = digitalPinToPCMSKbit(pin);
+    uint8_t portBitMask = _BV(portBit);
+    PcIntPort* port = get_port(portGroup);
     
     if (port) {
-      port->funcs[bitpos(portBitMask)] = nullptr;
-      port->args[bitpos(portBitMask)] = nullptr;
+      port->funcs[portBit] = nullptr;
+      port->args[portBit] = nullptr;
       port->rising &= ~portBitMask;
       port->falling &= ~portBitMask; 
 
-      *pcmsk &= ~_BV(digitalPinToPCMSKbit(pin));
+      *pcmsk &= ~portBitMask;
       //Switch off the group if all of the group are now off
-      if (*pcmsk == 0x00F){ //Alternatively "if (!*pcmsk)"
+      if (!*pcmsk) {
         *pcicr &= ~_BV(digitalPinToPCICRbit(pin));
       }
     }
