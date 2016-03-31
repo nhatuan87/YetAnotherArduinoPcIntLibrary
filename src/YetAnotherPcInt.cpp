@@ -37,14 +37,14 @@
     uint8_t trigger_pins = pcmsk & (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) ); \
     PcIntCallback* callbacks = port.callbacks; \
     port.state = new_state; \
-    while (trigger_pins) { \
-      if ((trigger_pins & 1)) { \
-        callbacks->func(callbacks->arg, new_state & 1); \
-      } \
-      new_state >>=1; \
-      trigger_pins >>= 1; \
-      callbacks++; \
-    } \
+    if (trigger_pins & _BV(0)) port.callbacks[0].func(port.callbacks[0].arg, bool(new_state & _BV(0))); \
+    if (trigger_pins & _BV(1)) port.callbacks[1].func(port.callbacks[1].arg, bool(new_state & _BV(1))); \
+    if (trigger_pins & _BV(2)) port.callbacks[2].func(port.callbacks[2].arg, bool(new_state & _BV(2))); \
+    if (trigger_pins & _BV(3)) port.callbacks[3].func(port.callbacks[3].arg, bool(new_state & _BV(3))); \
+    if (trigger_pins & _BV(4)) port.callbacks[4].func(port.callbacks[4].arg, bool(new_state & _BV(4))); \
+    if (trigger_pins & _BV(5)) port.callbacks[5].func(port.callbacks[5].arg, bool(new_state & _BV(5))); \
+    if (trigger_pins & _BV(6)) port.callbacks[6].func(port.callbacks[6].arg, bool(new_state & _BV(6))); \
+    if (trigger_pins & _BV(7)) port.callbacks[7].func(port.callbacks[7].arg, bool(new_state & _BV(7))); \
   }
 
 struct PcIntCallback {
