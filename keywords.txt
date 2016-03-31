@@ -14,6 +14,8 @@ PcInt	KEYWORD1
 
 attachInterrupt	KEYWORD2
 detachInterrupt	KEYWORD2
+enableInterrupt	KEYWORD2
+disableInterrupt	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

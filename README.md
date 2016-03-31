@@ -3,21 +3,40 @@ Yet Another Arduino PcInt Library
 
 As you may have guessed, this is an Arduino library to handle Pin Change Interrupts.
 
+Examples
+-------
+
+``` c++
+#define PCINT_PIN A15
+
+#include <YetAnotherPcInt.h>
+
+void pinChanged(const char* message, bool pinstate) {
+  Serial.print(message);
+  Serial.println(pinstate ? "HIGH" : "LOW");
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(PCINT_PIN, INPUT_PULLUP);
+  PcInt::attachInterrupt(PCINT_PIN, pinChanged, "Pin has changed to ", CHANGE);
+}
+
+void loop() {}
+```
+
 Features
 --------
 - Easy to install and use
 - Callbacks provide useful arguments:
-  - _A User-provided pointer_:
 
-    This can be an object with some contest, a string to print, or to whatever else you want.
+  - _A User-provided pointer_: This can be an object with some context, a string to print, or to whatever else you want.
 
-    This is specially useful when developing components that can be instantiated many times.
+    This is specially useful when developing components that can be instantiated many times ([See example](examples/PinListenerComponent/PinListenerComponent.ino))
     
-  - _The pin's state_:
-
-    That's the very first thing you were going to do inside the callbacks, wasn't it?
+  - _The pin's state_: That's the very first thing you were going to do inside the callbacks, wasn't it?
     
-    Adding this as an argument prevents issues when the pin state changes so quickly that you don't have the time to call `digitalRead()`
+    Providing it as an argument prevents concurrency issues.
     
 - It should support `RISING`/`FALLING`/`CHANGE` modes
 
@@ -88,43 +107,3 @@ I've looked at many of them before I decided to create this library, and this is
   - [ ] Not very optimized
   - [X] Good code quality
   - [X] Should support all/most AVR Arduinos
-
-
-Examples
--------
-
-... TODO ...
-Here is a quick example to get you started
-
-```
-#include <Sodaq_PcInt.h>
-void setup()
-{
-  pinMode(A0, INPUT_PULLUP);
-  PcInt::attachInterrupt(A0, handleA0);
-}
-
-void loop()
-{
-  // ...
-}
-
-static uint8_t rain1ticks;
-void handleA0()
-{
-  static bool rain1State;
-  //rain counter 1
-  if (digitalRead(A0) == LOW) {
-    if (!rain1State) {
-      rain1ticks++;
-      rain1State = true;
-    }
-  } else {
-    rain1State = false;
-  }
-}
-```
-
-Most important functions
-------------------------
-* PcInt::attachInterrupt
