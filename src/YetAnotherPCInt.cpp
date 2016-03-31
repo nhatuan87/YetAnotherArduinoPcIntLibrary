@@ -50,8 +50,21 @@
 #include "YetAnotherPCInt.h"
 #include "PinChangeInterruptBoards.h"
 
-class PcIntPort
-{
+
+#define IMPLEMENT_ISR(port, isr_vect, pin_register) \
+  ISR(isr_vect) \
+  { \
+    uint8_t new_state = pin_register; \
+    uint8_t trigger_pins = (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) ); \
+    port.state = new_state; \
+    for (uint8_t nr = 0; nr < 8; ++nr) { \
+      if ((trigger_pins & _BV(nr)) && port.funcs[nr]) { \
+        (*port.funcs[nr])(port.args[nr], bool(_BV(nr) & new_state)); \
+      } \
+    } \
+  }
+
+class PcIntPort {
 public:
   PcInt::callback_arg funcs[8];
   void* args[8];
@@ -67,18 +80,21 @@ public:
   { }
 };
 
-
 #if defined(PCINT_INPUT_PORT0)
 PcIntPort port0;
+IMPLEMENT_ISR(port0, PCINT0_vect, PCINT_INPUT_PORT0)
 #endif
 #if defined(PCINT_INPUT_PORT1)
 PcIntPort port1;
+IMPLEMENT_ISR(port1, PCINT1_vect, PCINT_INPUT_PORT1)
 #endif
 #if defined(PCINT_INPUT_PORT2)
 PcIntPort port2;
+IMPLEMENT_ISR(port2, PCINT2_vect, PCINT_INPUT_PORT2)
 #endif
 #if defined(PCINT_INPUT_PORT3)
 PcIntPort port3;
+IMPLEMENT_ISR(port3, PCINT3_vect, PCINT_INPUT_PORT3)
 #endif
 
 
@@ -195,32 +211,3 @@ void PcInt::disableInterrupt(uint8_t pin)
     *pcmsk &= ~_BV(digitalPinToPCMSKbit(pin));
   }
 }
-
-#define IMPLEMENT_ISR(vect, port, pin_register) \
-  ISR(vect) \
-  { \
-    uint8_t new_state = pin_register; \
-    uint8_t trigger_pins = (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) ); \
-    port.state = new_state; \
-    for (uint8_t nr = 0; nr < 8; ++nr) { \
-      if ((trigger_pins & _BV(nr)) && port.funcs[nr]) { \
-        (*port.funcs[nr])(port.args[nr], bool(_BV(nr) & new_state)); \
-      } \
-    } \
-  }
-
-#if defined(PCINT_INPUT_PORT0)
-IMPLEMENT_ISR(PCINT0_vect, port0, PCINT_INPUT_PORT0)
-#endif
-
-#if defined(PCINT_INPUT_PORT1)
-IMPLEMENT_ISR(PCINT1_vect, port1, PCINT_INPUT_PORT1)
-#endif
-
-#if defined(PCINT_INPUT_PORT2)
-IMPLEMENT_ISR(PCINT2_vect, port2, PCINT_INPUT_PORT2)
-#endif
-
-#if defined(PCINT_INPUT_PORT3)
-IMPLEMENT_ISR(PCINT3_vect, port3, PCINT_INPUT_PORT3)
-#endif
