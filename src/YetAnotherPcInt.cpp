@@ -47,7 +47,7 @@
  * it can see which of the port pins changed.
  */
 
-#include "YetAnotherPCInt.h"
+#include "YetAnotherPcInt.h"
 #include "PinChangeInterruptBoards.h"
 
 #define WITHOUT_INTERRUPTION(CODE) {uint8_t sreg = SREG; noInterrupts(); {CODE} SREG = sreg;}
