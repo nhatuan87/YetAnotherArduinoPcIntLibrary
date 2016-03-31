@@ -1,7 +1,7 @@
 /*
- * Sodaq_PcInt.cpp
+ * YetAnotherPcInt.cpp
  *
- * Copyright (c) 2014 Kees Bakker
+ * Copyright (c) 2014-2016 Kees Bakker, Paulo Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,28 +23,6 @@
  * the standard Arduino attachInterrupt.  It was created with
  * inspiration from PcInt, PinChangeInt and PciManager.  The main
  * goal was to keep it simple and small as possible.
- *
- * The handler prototype is void (*)(void).  This makes is identical
- * to the call backs for Ardiuno's attachInterrupt.
- *
- * A simple example of its usage is as follows:
- *
- *   #include <PcInt.h>
- *
- *   void setup()
- *   {
- *     pinMode(A0, INPUT_PULLUP);
- *     PcInt::attachInterrupt(A0, handleA0);
- *   }
- *
- *   void handlerA0()
- *   {
- *     // pin A0 changed, do something
- *   }
- *
- * The user program is responsible to look at the I/O pin and see what
- * happened.  The original PcInt keeps track of old port values so that
- * it can see which of the port pins changed.
  */
 
 #include "YetAnotherPcInt.h"

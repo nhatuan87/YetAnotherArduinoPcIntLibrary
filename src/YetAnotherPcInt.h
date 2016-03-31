@@ -1,11 +1,11 @@
 /*
- * Sodaq_PcInt.h
+ * YetAnotherPcInt.h
  *
  * This module supplies a set of helper functions to use the
  * PinChange interrupt in a convenient manner, similar to
  * the standard Arduino attachInterrupt.
  *
- * Copyright (c) 2014 Kees Bakker
+ * Copyright (c) 2014-2016 Kees Bakker, Paulo Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,11 +21,6 @@
  * Public License along with this library; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */
-
-/*
- * This file is derived from Sodaq's PcInt Library
- * https://github.com/SodaqMoja/Sodaq_PcInt
  */
 
 #pragma once
