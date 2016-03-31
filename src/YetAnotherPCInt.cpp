@@ -52,50 +52,50 @@
 
 #define WITHOUT_INTERRUPTION(CODE) {uint8_t sreg = SREG; noInterrupts(); {CODE} SREG = sreg;}
 
-#define IMPLEMENT_ISR(port, isr_vect, pin_register) \
+#define IMPLEMENT_ISR(port, isr_vect, pcmsk, input) \
   ISR(isr_vect) \
   { \
-    uint8_t new_state = pin_register; \
-    uint8_t trigger_pins = (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) ); \
+    uint8_t new_state = input; \
+    uint8_t trigger_pins = pcmsk & (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) ); \
+    PcIntCallback* callbacks = port.callbacks; \
     port.state = new_state; \
-    for (uint8_t nr = 0; nr < 8; ++nr) { \
-      if ((trigger_pins & _BV(nr)) && port.funcs[nr]) { \
-        (*port.funcs[nr])(port.args[nr], bool(_BV(nr) & new_state)); \
+    while (trigger_pins) { \
+      if ((trigger_pins & 1)) { \
+        callbacks->func(callbacks->arg, new_state & 1); \
       } \
+      new_state >>=1; \
+      trigger_pins >>= 1; \
+      callbacks++; \
     } \
   }
 
-class PcIntPort {
-public:
-  PcInt::callback funcs[8];
-  void* args[8];
+struct PcIntCallback {
+  PcInt::callback func;
+  void* arg;
+};
+  
+struct PcIntPort {
+  PcIntCallback callbacks[8];
   uint8_t state;
   uint8_t rising;
   uint8_t falling;
-  
-  PcIntPort() 
-  : funcs({nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}),
-    state(0),
-    rising(0),
-    falling(0)
-  { }
 };
 
 #if defined(PCINT_INPUT_PORT0)
 PcIntPort port0;
-IMPLEMENT_ISR(port0, PCINT0_vect, PCINT_INPUT_PORT0)
+IMPLEMENT_ISR(port0, PCINT0_vect, PCMSK0, PCINT_INPUT_PORT0)
 #endif
 #if defined(PCINT_INPUT_PORT1)
 PcIntPort port1;
-IMPLEMENT_ISR(port1, PCINT1_vect, PCINT_INPUT_PORT1)
+IMPLEMENT_ISR(port1, PCINT1_vect, PCMSK1, PCINT_INPUT_PORT1)
 #endif
 #if defined(PCINT_INPUT_PORT2)
 PcIntPort port2;
-IMPLEMENT_ISR(port2, PCINT2_vect, PCINT_INPUT_PORT2)
+IMPLEMENT_ISR(port2, PCINT2_vect, PCMSK2, PCINT_INPUT_PORT2)
 #endif
 #if defined(PCINT_INPUT_PORT3)
 PcIntPort port3;
-IMPLEMENT_ISR(port3, PCINT3_vect, PCINT_INPUT_PORT3)
+IMPLEMENT_ISR(port3, PCINT3_vect, PCMSK3, PCINT_INPUT_PORT3)
 #endif
 
 
@@ -145,8 +145,8 @@ void PcInt::attachInterrupt(uint8_t pin, callback func, void* arg, uint8_t mode)
   
   if (pcicr && pcmsk && port && func) {
     WITHOUT_INTERRUPTION({
-      port->funcs[portBit] = func;
-      port->args[portBit] = arg;
+      port->callbacks[portBit].func = func;
+      port->callbacks[portBit].arg  = arg;
       port->rising  = (mode == RISING || mode == CHANGE)  ?  (port->rising  | portBitMask)  :  (port->rising  & ~portBitMask);
       port->falling = (mode == FALLING|| mode == CHANGE)  ?  (port->falling | portBitMask)  :  (port->falling & ~portBitMask);
       *pcmsk |= portBitMask;
@@ -166,10 +166,10 @@ void PcInt::detachInterrupt(uint8_t pin) {
   uint8_t portBitMask = _BV(portBit);
   PcIntPort* port = get_port(portGroup);
   
-  if (pcicr && pcmsk && port) {   
+  if (pcicr && pcmsk && port) {
     WITHOUT_INTERRUPTION({
-      port->funcs[portBit] = nullptr;
-      port->args[portBit] = nullptr;
+      port->callbacks[portBit].func = nullptr;
+      port->callbacks[portBit].arg  = nullptr;
       port->rising &= ~portBitMask;
       port->falling &= ~portBitMask; 
 
@@ -190,7 +190,7 @@ void PcInt::enableInterrupt(uint8_t pin) {
   uint8_t portBitMask = _BV(portBit);
   PcIntPort* port = get_port(portGroup);
   
-  if (pcicr && pcmsk && port && port->funcs[portBit]) {
+  if (pcicr && pcmsk && port && port->callbacks[portBit].func && !(*pcmsk & portBitMask)) {
     WITHOUT_INTERRUPTION({
       *pcmsk |= portBitMask;
       *pcicr |= _BV(digitalPinToPCICRbit(pin));
@@ -204,12 +204,10 @@ void PcInt::enableInterrupt(uint8_t pin) {
 void PcInt::disableInterrupt(uint8_t pin) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
-  uint8_t portGroup = digitalPinToPCICRbit(pin);
   uint8_t portBit = digitalPinToPCMSKbit(pin);
   uint8_t portBitMask = _BV(portBit);
-  PcIntPort* port = get_port(portGroup);
   
-  if (pcicr && pcmsk && port) {   
+  if (pcicr && pcmsk) {
     WITHOUT_INTERRUPTION({
       *pcmsk &= ~portBitMask;
       //Switch off the group if all of the group are now off
