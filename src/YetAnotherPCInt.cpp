@@ -47,9 +47,8 @@
  * it can see which of the port pins changed.
  */
 
-#include "Sodaq_PcInt.h"
+#include "YetAnotherPCInt.h"
 #include "PinChangeInterruptBoards.h"
-#include <avr/interrupt.h>
 
 class PcIntPort
 {

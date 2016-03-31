@@ -23,14 +23,16 @@
  * Boston, MA  02111-1307  USA
  */
 
-#ifndef SODAQ_PCINT_H_
-#define SODAQ_PCINT_H_
+/*
+ * This file is derived from Sodaq's PcInt Library
+ * https://github.com/SodaqMoja/Sodaq_PcInt
+ */
+
+#pragma once
 
 #include <Arduino.h>
-#include <stdint.h>
 
-class PcInt
-{
+class PcInt {
 public:
   typedef void (*callback)(void);
   typedef void (*callback_arg)(void *arg, bool value);
@@ -48,5 +50,3 @@ public:
   // For diagnostic purposes
   static callback getFunc(uint8_t group, uint8_t nr);
 };
-
-#endif /* SODAQ_PCINT_H_ */
