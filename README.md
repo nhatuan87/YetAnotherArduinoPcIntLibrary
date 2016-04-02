@@ -52,7 +52,7 @@ API
 Attaches a callback function to Pin Change Interruptions on the specified pin.
 
 ```
-void PcInt.attachInterrupt(
+void PcInt::attachInterrupt(
     uint8_t pin, 
     callback func, 
     T *userdata, 
@@ -81,7 +81,7 @@ Arguments:
 
 ### detachInterrupt
 ```
-void PcInt.detachInterrupt(
+void PcInt::detachInterrupt(
     uint8_t pin);
 ```
 
