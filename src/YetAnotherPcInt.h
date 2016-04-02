@@ -33,8 +33,6 @@ public:
   
   static void attachInterrupt(uint8_t pin, callback func, void *userdata, uint8_t mode=CHANGE, bool trigger_now=false);
   static void detachInterrupt(uint8_t pin);
-  static void enableInterrupt(uint8_t pin, bool trigger_now=false);
-  static void disableInterrupt(uint8_t pin);
 
 
   // === Syntax sugar for `attachInterrupt()` with different callback signatures ===
