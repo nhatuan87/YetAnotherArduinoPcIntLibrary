@@ -44,6 +44,52 @@ Features
 
 - Code is very small (~250 lines) and readable
 
+API
+---
+
+### attachInterrupt
+
+Attaches a callback function to Pin Change Interruptions on the specified pin.
+
+```
+void PcInt.attachInterrupt(
+    uint8_t pin, 
+    callback func, 
+    T *userdata, 
+    uint8_t mode=CHANGE, 
+    bool trigger_now=false);
+```
+
+Arguments:
+
+* `pin`: The pin number you are listening.
+* `callback`: The funcion called whenever the interrupt was triggered. 
+  
+  Your funcion must look like one of these:
+  
+  * `void myfunction() { ... }`
+  * `void myfunction(bool newstate) { ... }`
+  * `void myfunction(T* userdata) { ... }`
+  * `void myfunction(T* userdata, bool newstate) { ... }`
+* `userdata`: User-provided argument for `callback`. Skip this If your callback doesn't have a `userdata` argument.
+  
+  User-provided arguments are useful when reusing the same callback funcion to handle changes on multiple pins.
+
+* `mode`: The transition Which triggers the callbacks: `CHANGE`, `RISING` or `FALLING`.
+
+* `trigger_now`: If set, the callback is called immediately. This is useful for initialization.
+
+### detachInterrupt
+```
+void PcInt.detachInterrupt(
+    uint8_t pin);
+```
+
+Removes the callback function from Pin Change Interruptions on the specified pin.
+
+Arguments:
+
+* `pin`: The pin number you are no longer listening to.
 
 About Pin Change Interruptions
 ------------------------------
