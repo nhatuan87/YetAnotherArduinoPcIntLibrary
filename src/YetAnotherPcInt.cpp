@@ -113,7 +113,7 @@ static inline uint8_t get_port_value(uint8_t port) {
     }
 }
 
-void PcInt::attachInterrupt(uint8_t pin, callback func, void* arg, uint8_t mode) {
+void PcInt::attachInterrupt(uint8_t pin, callback func, void* arg, uint8_t mode, bool trigger_now) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
   uint8_t portGroup = digitalPinToPCICRbit(pin);
@@ -132,6 +132,12 @@ void PcInt::attachInterrupt(uint8_t pin, callback func, void* arg, uint8_t mode)
 
       //Update the current state (but only for this pin, to prevent concurrency issues on the others)
       port->state = (port->state & ~portBitMask) | (get_port_value(portGroup) & portBitMask);
+      
+      if (trigger_now) {
+        if ( portBitMask & ( (port->rising & port->state) | (port->falling & ~port->state) ) ) {
+           port->callbacks[portBit].func(port->callbacks[portBit].arg, bool(port->state & portBitMask));
+        }
+      }
     })
   }
 }
@@ -160,7 +166,7 @@ void PcInt::detachInterrupt(uint8_t pin) {
   }
 }
 
-void PcInt::enableInterrupt(uint8_t pin) {
+void PcInt::enableInterrupt(uint8_t pin, bool trigger_now) {
   volatile uint8_t * pcicr = digitalPinToPCICR(pin);
   volatile uint8_t * pcmsk = digitalPinToPCMSK(pin);
   uint8_t portGroup = digitalPinToPCICRbit(pin);
@@ -175,6 +181,12 @@ void PcInt::enableInterrupt(uint8_t pin) {
 
       //Update the current state (but only for this pin, to prevent concurrency issues on the others)
       port->state = (port->state & ~portBitMask) | (get_port_value(portGroup) & portBitMask);
+      
+      if (trigger_now) {
+        if ( portBitMask & ( (port->rising & port->state) | (port->falling & ~port->state) ) ) {
+          port->callbacks[portBit].func(port->callbacks[portBit].arg, bool(port->state & portBitMask));
+        }
+      }
     })
   }
 }
