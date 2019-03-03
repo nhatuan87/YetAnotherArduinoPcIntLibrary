@@ -33,18 +33,7 @@
 #define IMPLEMENT_ISR(port, isr_vect, pcmsk, input) \
   ISR(isr_vect) \
   { \
-    uint8_t new_state = input; \
-    uint8_t trigger_pins = pcmsk & (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) ); \
-    PcIntCallback* callbacks = port.callbacks; \
-    port.state = new_state; \
-    if (trigger_pins & _BV(0)) port.callbacks[0].func(port.callbacks[0].arg, bool(new_state & _BV(0))); \
-    if (trigger_pins & _BV(1)) port.callbacks[1].func(port.callbacks[1].arg, bool(new_state & _BV(1))); \
-    if (trigger_pins & _BV(2)) port.callbacks[2].func(port.callbacks[2].arg, bool(new_state & _BV(2))); \
-    if (trigger_pins & _BV(3)) port.callbacks[3].func(port.callbacks[3].arg, bool(new_state & _BV(3))); \
-    if (trigger_pins & _BV(4)) port.callbacks[4].func(port.callbacks[4].arg, bool(new_state & _BV(4))); \
-    if (trigger_pins & _BV(5)) port.callbacks[5].func(port.callbacks[5].arg, bool(new_state & _BV(5))); \
-    if (trigger_pins & _BV(6)) port.callbacks[6].func(port.callbacks[6].arg, bool(new_state & _BV(6))); \
-    if (trigger_pins & _BV(7)) port.callbacks[7].func(port.callbacks[7].arg, bool(new_state & _BV(7))); \
+    PcIntISR(port, pcmsk, input); \
   }
 
 struct PcIntCallback {
@@ -59,19 +48,34 @@ struct PcIntPort {
   uint8_t falling;
 };
 
-#if defined(PCINT_INPUT_PORT0)
+void PcIntISR(PcIntPort port, uint8_t pcmsk, uint8_t input) {
+  uint8_t new_state = input;
+  uint8_t trigger_pins = pcmsk & (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) );
+  PcIntCallback* callbacks = port.callbacks;
+  port.state = new_state;
+  if (trigger_pins & _BV(0)) port.callbacks[0].func(port.callbacks[0].arg, bool(new_state & _BV(0)));
+  if (trigger_pins & _BV(1)) port.callbacks[1].func(port.callbacks[1].arg, bool(new_state & _BV(1)));
+  if (trigger_pins & _BV(2)) port.callbacks[2].func(port.callbacks[2].arg, bool(new_state & _BV(2)));
+  if (trigger_pins & _BV(3)) port.callbacks[3].func(port.callbacks[3].arg, bool(new_state & _BV(3)));
+  if (trigger_pins & _BV(4)) port.callbacks[4].func(port.callbacks[4].arg, bool(new_state & _BV(4)));
+  if (trigger_pins & _BV(5)) port.callbacks[5].func(port.callbacks[5].arg, bool(new_state & _BV(5)));
+  if (trigger_pins & _BV(6)) port.callbacks[6].func(port.callbacks[6].arg, bool(new_state & _BV(6)));
+  if (trigger_pins & _BV(7)) port.callbacks[7].func(port.callbacks[7].arg, bool(new_state & _BV(7)));
+}
+
+#if defined(PCINT0_vect)
 PcIntPort port0;
 IMPLEMENT_ISR(port0, PCINT0_vect, PCMSK0, PCINT_INPUT_PORT0)
 #endif
-#if defined(PCINT_INPUT_PORT1)
+#if defined(PCINT1_vect)
 PcIntPort port1;
 IMPLEMENT_ISR(port1, PCINT1_vect, PCMSK1, PCINT_INPUT_PORT1)
 #endif
-#if defined(PCINT_INPUT_PORT2)
+#if defined(PCINT2_vect)
 PcIntPort port2;
 IMPLEMENT_ISR(port2, PCINT2_vect, PCMSK2, PCINT_INPUT_PORT2)
 #endif
-#if defined(PCINT_INPUT_PORT3)
+#if defined(PCINT3_vect)
 PcIntPort port3;
 IMPLEMENT_ISR(port3, PCINT3_vect, PCMSK3, PCINT_INPUT_PORT3)
 #endif
@@ -79,37 +83,19 @@ IMPLEMENT_ISR(port3, PCINT3_vect, PCMSK3, PCINT_INPUT_PORT3)
 
 static inline PcIntPort* get_port(uint8_t port) {
     switch (port) {
-#if defined(PCINT_INPUT_PORT0)
+#if defined(PCINT0_vect)
         case 0: return &port0;
 #endif
-#if defined(PCINT_INPUT_PORT1)
+#if defined(PCINT1_vect)
         case 1: return &port1;
 #endif
-#if defined(PCINT_INPUT_PORT2)
+#if defined(PCINT2_vect)
         case 2: return &port2;
 #endif
-#if defined(PCINT_INPUT_PORT3)
+#if defined(PCINT3_vect)
         case 3: return &port3;
 #endif
         default: return nullptr;
-    }
-}
-
-static inline uint8_t get_port_value(uint8_t port) {
-    switch (port) {
-#if defined(PCINT_INPUT_PORT0)
-        case 0: return PCINT_INPUT_PORT0;
-#endif
-#if defined(PCINT_INPUT_PORT1)
-        case 1: return PCINT_INPUT_PORT1;
-#endif
-#if defined(PCINT_INPUT_PORT2)
-        case 2: return PCINT_INPUT_PORT2;
-#endif
-#if defined(PCINT_INPUT_PORT3)
-        case 3: return PCINT_INPUT_PORT3;
-#endif
-        default: return 0;
     }
 }
 
@@ -128,10 +114,10 @@ void PcInt::attachInterrupt(uint8_t pin, callback func, void* arg, uint8_t mode,
       port->rising  = (mode == RISING || mode == CHANGE)  ?  (port->rising  | portBitMask)  :  (port->rising  & ~portBitMask);
       port->falling = (mode == FALLING|| mode == CHANGE)  ?  (port->falling | portBitMask)  :  (port->falling & ~portBitMask);
       *pcmsk |= portBitMask;
-      *pcicr |= _BV(digitalPinToPCICRbit(pin));
+      *pcicr |= _BV(portGroup);
 
       //Update the current state (but only for this pin, to prevent concurrency issues on the others)
-      port->state = (port->state & ~portBitMask) | (get_port_value(portGroup) & portBitMask);
+      port->state = (port->state & ~portBitMask) | (*portInputRegister(digitalPinToPort(pin)) & portBitMask);
       
       if (trigger_now) {
         if ( portBitMask & ( (port->rising & port->state) | (port->falling & ~port->state) ) ) {

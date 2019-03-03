@@ -18,6 +18,13 @@
 #define PCINT_INPUT_PORT1 PINC
 #define PCINT_INPUT_PORT2 PIND
 
+#elif defined(__AVR_ATmega328PB__)
+// Atmel Xplained Mini
+#define PCINT_INPUT_PORT0 PINB
+#define PCINT_INPUT_PORT1 PINC
+#define PCINT_INPUT_PORT2 PIND
+#define PCINT_INPUT_PORT3 PINE
+
 #elif defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega640__)
 // Arduino Mega/Mega2560
 // special Port1 case, pins are on 2 HW Pin Ports (E,J)
