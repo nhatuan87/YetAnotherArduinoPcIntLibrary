@@ -48,10 +48,8 @@ struct PcIntPort {
   uint8_t falling;
 };
 
-void PcIntISR(PcIntPort port, uint8_t pcmsk, uint8_t input) {
-  uint8_t new_state = input;
+void PcIntISR(PcIntPort &port, uint8_t pcmsk, uint8_t new_state) {
   uint8_t trigger_pins = pcmsk & (port.state ^ new_state) & ( (port.rising & new_state) | (port.falling & ~new_state) );
-  PcIntCallback* callbacks = port.callbacks;
   port.state = new_state;
   if (trigger_pins & _BV(0)) port.callbacks[0].func(port.callbacks[0].arg, bool(new_state & _BV(0)));
   if (trigger_pins & _BV(1)) port.callbacks[1].func(port.callbacks[1].arg, bool(new_state & _BV(1)));
